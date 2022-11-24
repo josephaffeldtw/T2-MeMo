@@ -1,125 +1,50 @@
 import * as vscode from 'vscode';
-const TYPESCRIPT: vscode.DocumentFilter = { language: 'typescript' }
+const TYPESCRIPT: vscode.DocumentFilter = { language: 'typescript' };
 
-function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
 
-	console.log('Congratulations, your extension "getter-setter-generator" is now active!');
-
-	let getterAndSetter = vscode.commands.registerCommand('extension.getterAndSetter', function () {
+	console.log('Congratulations, your extension "GetterAndSetter" is now active!');
+	
+	context.subscriptions.push(vscode.commands.registerCommand('GetterAndSetter.getterAndSetter', function () {
 		const editor = vscode.window.activeTextEditor;
 
 		if (!editor) {
 			return;
+		} else {
+			vscode.window.showInformationMessage('Editor está funcionando');
 		}
 
 		let language = TYPESCRIPT.language;
 
 		const hasSelection = !editor.selection.isEmpty;
 
-		// check if the user selected something, otherwise display error message
 		if (hasSelection) {
 
 			let text = editor.document.getText(editor.selection);
-			let generatedCode: string | undefined;
+			let generatedCode: any;
 
 			if (language === 'typescript') {
-				generatedCode = generateGetterAndSetter(text, "both", language);			
+				vscode.window.showInformationMessage('É um arquivo TypeScript');
+				//generatedCode = generateGetterAndSetter(text, "both", language);			
 			} else {
-				vscode.window.showInformationMessage('Language currently unsupported, please submit an Issue for this package!')
+				vscode.window.showInformationMessage('Language currently unsupported, please submit an Issue for this package!');
 			}
 
-			editor.edit(
-				(				edit: { insert: (arg0: any, arg1: any) => void; }) => editor.selections.forEach(
-					(					selection: { end: any; }) => {
-						edit.insert(selection.end, generatedCode);
-					}
-				)
-			);
+			writerInEditor('oi', editor);
 
-			vscode.window.showInformationMessage('Getter/Setter were generated');
+			vscode.window.showInformationMessage('Getter e Setters criados com sucesso!');
 		} else {
-			vscode.window.showErrorMessage('Nothing was selected!');
+			vscode.window.showErrorMessage('O Arquivo está vazio');
 		}
-	});
-
-	let getter = vscode.commands.registerCommand('extension.getter', function () {
-		const editor = vscode.window.activeTextEditor;
-
-		if (!editor) {
-			return;
-		}
-
-		let language = TYPESCRIPT.language;
-
-		const hasSelection = !editor.selection.isEmpty;
-
-		if (hasSelection) {
-
-			let text = editor.document.getText(editor.selection);
-			let generatedCode: string | undefined;
-
-			if (language === 'typescript' ) {
-				generatedCode = generateGetterAndSetter(text, "getter", language);			
-			} else {
-				vscode.window.showInformationMessage('Language currently unsupported, please submit an Issue for this package!')
-			}
-
-			editor.edit(
-				(				edit: { insert: (arg0: any, arg1: any) => void; }) => editor.selections.forEach(
-					(					selection: { end: any; }) => {
-						edit.insert(selection.end, generatedCode); // C# -> replace selection
-					}
-				)
-			);
-
-			vscode.window.showInformationMessage('Getter were generated');
-		} else {
-			vscode.window.showErrorMessage('Nothing was selected!');
-		}
-	});
-
-	let setter = vscode.commands.registerCommand('extension.setter', function () {
-		const editor = vscode.window.activeTextEditor;
-
-		if (!editor) {
-			return;
-		}
-
-		let language = TYPESCRIPT.language;
-
-		const hasSelection = !editor.selection.isEmpty;
-
-		if (hasSelection) {
-
-			let text = editor.document.getText(editor.selection);
-			let generatedCode: string | undefined;
-
-			if ( language === 'typescript' ) {
-				generatedCode = generateGetterAndSetter(text, "setter", language);			
-			} else {
-				vscode.window.showInformationMessage('Language currently unsupported, please submit an Issue for this package!')
-			}
-
-			editor.edit(
-				(				edit: { insert: (arg0: any, arg1: any) => void; }) => editor.selections.forEach(
-					(					selection: { end: any; }) => {
-						edit.insert(selection.end, generatedCode); // C# -> replace selection
-					}
-				)
-			);
-
-			vscode.window.showInformationMessage('Setter were generated');
-		} else {
-			vscode.window.showErrorMessage('Nothing was selected!');
-		}
-	});
-
-
-	context.subscriptions.push(getterAndSetter);
-	context.subscriptions.push(getter);
-	context.subscriptions.push(setter);
+	}));
 }
-exports.activate = activate;
+
+function writerInEditor(text: string, editor: vscode.TextEditor) {
+	editor.edit((edit: { insert: (arg0: any, arg1: any) => void; }) => 
+		editor.selections.forEach((selection: { end: any; }) => {
+			edit.insert(selection.end, text);				
+		}));
+}
 
 function generateGetterAndSetter(text: string, returnableType: string, language: string){
 	let selectedTextArray = text.split('\r\n').filter((e: any) => e);
@@ -146,33 +71,33 @@ function generateGetterAndSetter(text: string, returnableType: string, language:
 		}
 		
 		if (variableName === null || variableName === undefined) {
-			vscode.window.showErrorMessage('Faulty Selection. Please make sure you select a variable.')
+			vscode.window.showErrorMessage('Faulty Selection. Please make sure you select a variable.');
 			return; 
 		}
 
 		variableName.trim();
 		variableType.trim();
 
-		let lang: string [] = [language];
+		let lang: any;
 		let code = '';
-		let langObject = lang;
+		let langObject = lang[language];
 		let variableNameUp = variableName.charAt(0).toUpperCase() + variableName.slice(1);
 
 		if (returnableType === "both") {
-			let getterPlain = langObject.getter
-			let setterPlain = langObject.setter				
+			let getterPlain = langObject.getter;
+			let setterPlain = langObject.setter;			
 		
 			let getter = getterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
 			let setter = setterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
 
 			code = getter + setter;		
 		} else if (returnableType === "getter"){
-			let getterPlain = langObject.getter		
+			let getterPlain = langObject.getter;	
 			let getter = getterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
 			
 			code = getter;			
 		} else if (returnableType === "setter"){
-			let setterPlain = langObject.setter
+			let setterPlain = langObject.setter;
 			let setter = setterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
 
 			code = setter;			
@@ -182,9 +107,4 @@ function generateGetterAndSetter(text: string, returnableType: string, language:
 	return generatedCode;
 }
 
-function deactivate() { }
-
-module.exports = {
-	activate,
-	deactivate
-}
+export function deactivate() {}

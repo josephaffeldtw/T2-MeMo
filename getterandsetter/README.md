@@ -1,6 +1,6 @@
-# getterandsetter README
+# GetterAndSetter README
 
-This is the README for your extension "getterandsetter". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "GetterAndSetter". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 

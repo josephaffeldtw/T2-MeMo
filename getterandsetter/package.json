@@ -1,5 +1,5 @@
 {
-  "name": "getterandsetter",
+  "name": "GetterAndSetter",
   "displayName": "GetterAndSetter",
   "description": "",
   "version": "0.0.1",
@@ -10,36 +10,32 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:extension.getterAndSetter"
+    "onCommand:GetterAndSetter.getterAndSetter",
+    "onCommand:GetterAndSetter.getter",
+    "onCommand:GetterAndSetter.setter"
   ],
-  "main": "./out/src/extension",
+  "main": "./out/extension.js",
   "contributes": {
     "commands": [
-			{
-				"command": "extension.getterAndSetter",
-				"title": "Generate Getter And Setter"
-			},
-			{
-				"command": "extension.getter",
-				"title": "Generate Getter"
-			}, 
-			{
-				"command": "extension.setter",
-				"title": "Generate Setter"
-			}
-		],
-		"keybindings": [
-			{
-				"command": "extension.getterAndSetter",
-				"key": "ctrl+alt+d"
-			}
-		]
+      {
+        "command": "GetterAndSetter.getterAndSetter",
+        "title": "Getter And Setter Command"
+      },
+      {
+        "command": "GetterAndSetter.getter",
+        "title": "Getter Command"
+      },
+      {
+        "command": "GetterAndSetter.setter",
+        "title": "Setter Command"
+      }
+    ]
   },
   "scripts": {
-    "vscode:prepublish": "yarn run compile",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "yarn run compile && yarn run lint",
+    "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
   },
