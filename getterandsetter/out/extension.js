@@ -20,7 +20,7 @@ function activate(context) {
             let generatedCode;
             if (language === 'typescript') {
                 vscode.window.showInformationMessage('É um arquivo TypeScript');
-                generatedCode = generatedGetterAndSetter(text);
+                generatedCode = createGetterAndSetter(text);
             }
             else {
                 vscode.window.showInformationMessage('Linguagem atual não suportada');
@@ -47,7 +47,7 @@ function activate(context) {
             let generatedCode;
             if (language === 'typescript') {
                 vscode.window.showInformationMessage('É um arquivo TypeScript');
-                generatedCode = generatedGetter(text);
+                generatedCode = createGetter(text);
             }
             else {
                 vscode.window.showInformationMessage('Linguagem atual não suportada');
@@ -74,7 +74,7 @@ function activate(context) {
             let generatedCode;
             if (language === 'typescript') {
                 vscode.window.showInformationMessage('É um arquivo TypeScript');
-                generatedCode = generatedSetter(text);
+                generatedCode = createSetter(text);
             }
             else {
                 vscode.window.showInformationMessage('Linguagem atual não suportada');
@@ -88,38 +88,86 @@ function activate(context) {
     }));
 }
 exports.activate = activate;
-function writerInEditor(text, editor) {
-    editor.edit((edit) => editor.selections.forEach((selection) => {
-        edit.insert(selection.end, text);
-    }));
+function createGetterAndSetter(text) {
+    let sections = text.split(";");
+    sections.pop();
+    let generated = '';
+    if (sections.length > 0) {
+        for (let s in sections) {
+            sections[s] = sections[s].replace("   ", "");
+            generated += generatedGetterAndSetter(sections[s]);
+        }
+    }
+    else {
+        generated = generatedGetterAndSetter(sections[0]);
+    }
+    return generated;
 }
-function toPascalCase(str) {
-    return str.replace(/\w+/g, (w) => w[0].toUpperCase() + w.slice(1));
+function createGetter(text) {
+    let sections = text.split(";");
+    sections.pop();
+    let generated = '';
+    if (sections.length > 0) {
+        for (let s in sections) {
+            sections[s] = sections[s].replace("   ", "");
+            generated += generatedGetter(sections[s]);
+        }
+    }
+    else {
+        generated = generatedGetter(sections[0]);
+    }
+    return generated;
 }
-function splitLine(text) {
-    return text.split(";");
+function createSetter(text) {
+    let sections = text.split(";");
+    sections.pop();
+    let generated = '';
+    if (sections.length > 0) {
+        for (let s in sections) {
+            sections[s] = sections[s].replace("   ", "");
+            generated += generatedSetter(sections[s]);
+        }
+    }
+    else {
+        generated = generatedSetter(sections[0]);
+    }
+    return generated;
 }
 function generatedGetterAndSetter(text) {
     return generatedGetter(text) + generatedSetter(text);
 }
 function generatedGetter(text) {
     let properties = text.split(":");
-    let type = properties[1].replace(";", "");
-    type = properties[1].replace(" ", "");
-    let attribute = properties[0].replace(" ", "");
+    let attribute = myReplace(properties[0]);
+    let type = myReplace(properties[1]);
     return `
+\t
 \tpublic get${toPascalCase(attribute)} () : ${type} {
 \t\treturn this.${attribute};
 \t}`;
 }
 function generatedSetter(text) {
     let properties = text.split(":");
-    let type = properties[1].replace(";", "");
-    let attribute = properties[0].replace(" ", "");
+    let attribute = myReplace(properties[0]);
+    let type = myReplace(properties[1]);
     return `
+\t
 \tpublic set${toPascalCase(attribute)}(${attribute}: ${type}): void {
 \t\tthis.${attribute} = ${attribute};
 \t}`;
+}
+function writerInEditor(text, editor) {
+    editor.edit((edit) => editor.selections.forEach((selection) => {
+        edit.insert(selection.end, text);
+    }));
+}
+function myReplace(text) {
+    let replace = text.replace(/(\r\n|\n|\r)/gm, "");
+    replace = replace.replace(" ", "");
+    return replace;
+}
+function toPascalCase(str) {
+    return str.replace(/\w+/g, (w) => w[0].toUpperCase() + w.slice(1));
 }
 function deactivate() { }
 exports.deactivate = deactivate;
