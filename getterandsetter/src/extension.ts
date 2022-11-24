@@ -25,12 +25,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 			if (language === 'typescript') {
 				vscode.window.showInformationMessage('É um arquivo TypeScript');
-				//generatedCode = generateGetterAndSetter(text, "both", language);			
+				generatedCode = createGetterAndSetter(text);			
 			} else {
 				vscode.window.showInformationMessage('Language currently unsupported, please submit an Issue for this package!');
 			}
 
-			writerInEditor('oi', editor);
+			writerInEditor(generatedCode, editor);
 
 			vscode.window.showInformationMessage('Getter e Setters criados com sucesso!');
 		} else {
@@ -46,65 +46,61 @@ function writerInEditor(text: string, editor: vscode.TextEditor) {
 		}));
 }
 
-function generateGetterAndSetter(text: string, returnableType: string, language: string){
-	let selectedTextArray = text.split('\r\n').filter((e: any) => e);
-	let generatedCode = '';
+function toPascalCase(str: string) {
+    return str.replace(/\w+/g,(w: string | any[]) => w[0].toUpperCase() + w.slice(1));
+}
 
-	for (const text of selectedTextArray) {
+function createGetterAndSetter(textPorperties: string){
+    var properties = textPorperties.split(/\r?\n/).filter(x => x.length > 2).map(x => x.replace(';', ''));
 
-		let selectedText: string;
-		let indentSize: string;
-		let variableType: string = '';
-		let variableName: string = '';
+    var generatedCode = ``;
 
-		selectedText = text.replace(';', '').trim();
-		indentSize = text.split(selectedText.charAt(0))[0];
-		
-		if (language === 'typescript'){
-			let isConstructorVariable = selectedText.includes('.');
-	
-			if (isConstructorVariable) {
-				variableName = selectedText.split('.')[1].split(' ')[0];
-			} else {
-				variableName = selectedText.split(':')[0];
-			}		
-		}
-		
-		if (variableName === null || variableName === undefined) {
-			vscode.window.showErrorMessage('Faulty Selection. Please make sure you select a variable.');
-			return; 
-		}
+    for (let p of properties) {
+        while (p.startsWith(" ")) p = p.substr(1);
+        while (p.startsWith("\t")) p = p.substr(1);
 
-		variableName.trim();
-		variableType.trim();
+        let words = p.split(" ").map(x => x.replace(/\r?\n/, ''));
+        let type = "";
+		let attribute, Attribute: string | undefined;
+        let create = false;
+        
+        if (words.length > 2){
+            type = words[1];
+            attribute = words[2];
+            Attribute = toPascalCase(words[2]);
 
-		let lang: any;
-		let code = '';
-		let langObject = lang[language];
-		let variableNameUp = variableName.charAt(0).toUpperCase() + variableName.slice(1);
+            create = true;
+		} else if (words.length === 2)
+		{
+            type = words[0];
+            attribute = words[1];
+            Attribute = toPascalCase(words[1]);
+            
+            create = true;            
+        }else if (words.length)
+        {
+            type = "Object";
+            attribute = words[0];
+            Attribute = toPascalCase(words[0]);
+            
+            create = true;            
+        }
 
-		if (returnableType === "both") {
-			let getterPlain = langObject.getter;
-			let setterPlain = langObject.setter;			
-		
-			let getter = getterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
-			let setter = setterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
+        if (create){
 
-			code = getter + setter;		
-		} else if (returnableType === "getter"){
-			let getterPlain = langObject.getter;	
-			let getter = getterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
-			
-			code = getter;			
-		} else if (returnableType === "setter"){
-			let setterPlain = langObject.setter;
-			let setter = setterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
+        let code = `
+\tpublic ${type} ${type.startsWith('bool') ? 'is' : 'get'}${Attribute}() {
+\t\treturn this.${attribute};
+\t}
+\tpublic void set${Attribute}(${type} ${attribute}) {
+\t\tthis.${attribute} = ${attribute};
+\t}
+`;
+            generatedCode += code;
+        }
+    }
 
-			code = setter;			
-		}
-		generatedCode += code;
-	}
-	return generatedCode;
+    return generatedCode;
 }
 
 export function deactivate() {}

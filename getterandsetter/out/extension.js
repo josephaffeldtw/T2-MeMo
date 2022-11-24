@@ -20,12 +20,12 @@ function activate(context) {
             let generatedCode;
             if (language === 'typescript') {
                 vscode.window.showInformationMessage('É um arquivo TypeScript');
-                //generatedCode = generateGetterAndSetter(text, "both", language);			
+                generatedCode = createGetterAndSetter(text);
             }
             else {
                 vscode.window.showInformationMessage('Language currently unsupported, please submit an Issue for this package!');
             }
-            writerInEditor('oi', editor);
+            writerInEditor(generatedCode, editor);
             vscode.window.showInformationMessage('Getter e Setters criados com sucesso!');
         }
         else {
@@ -39,53 +39,50 @@ function writerInEditor(text, editor) {
         edit.insert(selection.end, text);
     }));
 }
-function generateGetterAndSetter(text, returnableType, language) {
-    let selectedTextArray = text.split('\r\n').filter((e) => e);
-    let generatedCode = '';
-    for (const text of selectedTextArray) {
-        let selectedText;
-        let indentSize;
-        let variableType = '';
-        let variableName = '';
-        selectedText = text.replace(';', '').trim();
-        indentSize = text.split(selectedText.charAt(0))[0];
-        if (language === 'typescript') {
-            let isConstructorVariable = selectedText.includes('.');
-            if (isConstructorVariable) {
-                variableName = selectedText.split('.')[1].split(' ')[0];
-            }
-            else {
-                variableName = selectedText.split(':')[0];
-            }
+function toPascalCase(str) {
+    return str.replace(/\w+/g, (w) => w[0].toUpperCase() + w.slice(1));
+}
+function createGetterAndSetter(textPorperties) {
+    var properties = textPorperties.split(/\r?\n/).filter(x => x.length > 2).map(x => x.replace(';', ''));
+    var generatedCode = ``;
+    for (let p of properties) {
+        while (p.startsWith(" "))
+            p = p.substr(1);
+        while (p.startsWith("\t"))
+            p = p.substr(1);
+        let words = p.split(" ").map(x => x.replace(/\r?\n/, ''));
+        let type = "";
+        let attribute, Attribute;
+        let create = false;
+        if (words.length > 2) {
+            type = words[1];
+            attribute = words[2];
+            Attribute = toPascalCase(words[2]);
+            create = true;
         }
-        if (variableName === null || variableName === undefined) {
-            vscode.window.showErrorMessage('Faulty Selection. Please make sure you select a variable.');
-            return;
+        else if (words.length === 2) {
+            type = words[0];
+            attribute = words[1];
+            Attribute = toPascalCase(words[1]);
+            create = true;
         }
-        variableName.trim();
-        variableType.trim();
-        let lang;
-        let code = '';
-        let langObject = lang[language];
-        let variableNameUp = variableName.charAt(0).toUpperCase() + variableName.slice(1);
-        if (returnableType === "both") {
-            let getterPlain = langObject.getter;
-            let setterPlain = langObject.setter;
-            let getter = getterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
-            let setter = setterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
-            code = getter + setter;
+        else if (words.length) {
+            type = "Object";
+            attribute = words[0];
+            Attribute = toPascalCase(words[0]);
+            create = true;
         }
-        else if (returnableType === "getter") {
-            let getterPlain = langObject.getter;
-            let getter = getterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
-            code = getter;
+        if (create) {
+            let code = `
+\tpublic ${type} ${type.startsWith('bool') ? 'is' : 'get'}${Attribute}() {
+\t\treturn this.${attribute};
+\t}
+\tpublic void set${Attribute}(${type} ${attribute}) {
+\t\tthis.${attribute} = ${attribute};
+\t}
+`;
+            generatedCode += code;
         }
-        else if (returnableType === "setter") {
-            let setterPlain = langObject.setter;
-            let setter = setterPlain.replace(/indentSize/g, indentSize).replace(/variableType/g, variableType).replace(/variableNameUp/g, variableNameUp).replace(/variableName/g, variableName);
-            code = setter;
-        }
-        generatedCode += code;
     }
     return generatedCode;
 }
